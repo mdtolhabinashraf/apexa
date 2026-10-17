@@ -1,0 +1,14 @@
+src/
+tests/
+coverage/
+.github/
+.vscode/
+.idea/
+*.test.ts
+*.spec.ts
+tsconfig.tsbuildinfo
+.env
+.env.*
+!.env.example
+npm-debug.log*
+.DS_Store

@@ -1,0 +1,50 @@
+{
+  "name": "apexa",
+  "version": "0.1.0",
+  "description": "A configurable, TypeScript-first HTTP client built on the Fetch API.",
+  "license": "MIT",
+  "author": "Md. Tolha Bin Ashraf",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/types.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "docs/API.md"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "clean": "node -e \"import('node:fs').then(fs => fs.rmSync('dist', { recursive: true, force: true }))\"",
+    "build": "npm run clean && tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2"
+  },
+  "keywords": [
+    "http",
+    "fetch",
+    "api-client",
+    "typescript",
+    "http-client",
+    "interceptors",
+    "request",
+    "response"
+  ]
+}
