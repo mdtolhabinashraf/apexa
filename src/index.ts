@@ -7,7 +7,6 @@
 import type {
   ApiResponse,
   ApexaConfig,
-  ApexaErrorCode,
   ApexaErrorOptions,
   ApexaRequestMethods,
   ClientOptions,
@@ -49,6 +48,17 @@ const DEFAULT_CSRF = {
 
 const BODYLESS_METHODS = new Set<HttpMethod>(["GET", "HEAD"]);
 const RETRY_SAFE_METHODS = new Set<HttpMethod>(["GET", "HEAD", "OPTIONS"]);
+const SUPPORTED_METHODS = new Set<HttpMethod>([
+  "GET",
+  "HEAD",
+  "OPTIONS",
+  "POST",
+  "PUT",
+  "PATCH",
+  "DELETE",
+  "CONNECT",
+  "TRACE",
+]);
 
 /* -------------------------------------------------------------------------- */
 /* Errors                                                                      */
@@ -62,7 +72,10 @@ const RETRY_SAFE_METHODS = new Set<HttpMethod>(["GET", "HEAD", "OPTIONS"]);
  */
 export class ApexaError extends Error {
   /** Stable error code. */
-  public readonly code: ApexaErrorCode;
+  public readonly code: string;
+
+  /** Error priority. */
+  public readonly priority: "high" | "medium" | "low";
 
   /** Request configuration, when available. */
   public readonly config?: InternalRequestConfig;
@@ -80,6 +93,7 @@ export class ApexaError extends Error {
     super(message, { cause: options.cause });
     this.name = "ApexaError";
     this.code = options.code;
+    this.priority = options.priority ?? "medium";
 
     if (options.config !== undefined) this.config = options.config;
     if (options.response !== undefined) this.response = options.response;
@@ -181,6 +195,12 @@ function normalizeBasePath(value?: string): string {
 
 function isAbsoluteUrl(value: string): boolean {
   return /^[a-z][a-z\d+.-]*:\/\//i.test(value);
+}
+
+function isHttpMethod(value: unknown): value is HttpMethod {
+  return (
+    typeof value === "string" && SUPPORTED_METHODS.has(value as HttpMethod)
+  );
 }
 
 /**
@@ -356,8 +376,77 @@ function isAbortError(error: unknown): boolean {
   );
 }
 
-function sleep(milliseconds: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+function sleep(milliseconds: number, signal?: AbortSignal): Promise<void> {
+  if (milliseconds <= 0) return Promise.resolve();
+
+  return new Promise((resolve, reject) => {
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+    const cleanup = (): void => {
+      if (timeoutId !== undefined) clearTimeout(timeoutId);
+      signal?.removeEventListener("abort", abort);
+    };
+
+    const abort = (): void => {
+      cleanup();
+      reject(
+        signal?.reason ??
+          new DOMException("The request was aborted.", "AbortError"),
+      );
+    };
+
+    timeoutId = setTimeout(() => {
+      cleanup();
+      resolve();
+    }, milliseconds);
+
+    if (signal?.aborted) abort();
+    else signal?.addEventListener("abort", abort, { once: true });
+  });
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isErrorPriority(value: unknown): value is "high" | "medium" | "low" {
+  return value === "high" || value === "medium" || value === "low";
+}
+
+function defaultErrorHandler(
+  data: Record<string, unknown>,
+  status: number,
+): { message: string; code: string; priority: "high" | "medium" | "low" } {
+  const error = isRecord(data.error) ? data.error : {};
+
+  return {
+    code: typeof error.code === "string" ? error.code : "ERR_HTTP",
+    message:
+      typeof error.message === "string"
+        ? error.message
+        : `Request failed with HTTP status ${status}.`,
+    priority: isErrorPriority(error.priority) ? error.priority : "medium",
+  };
+}
+
+type ErrorDetails = ReturnType<typeof defaultErrorHandler>;
+
+function normalizeErrorDetails(value: unknown, status: number): ErrorDetails {
+  if (!isRecord(value)) {
+    return defaultErrorHandler({}, status);
+  }
+
+  return {
+    message:
+      typeof value.message === "string" && value.message.trim()
+        ? value.message
+        : `Request failed with HTTP status ${status}.`,
+    code:
+      typeof value.code === "string" && value.code.trim()
+        ? value.code
+        : "ERR_HTTP",
+    priority: isErrorPriority(value.priority) ? value.priority : "medium",
+  };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -579,7 +668,18 @@ export class Apexa implements ApexaRequestMethods {
         }, timeout);
       }
 
-      const method = (options.method ?? "GET").toUpperCase() as HttpMethod;
+      const requestedMethod =
+        typeof options.method === "string"
+          ? options.method.toUpperCase()
+          : "GET";
+
+      if (!isHttpMethod(requestedMethod)) {
+        throw new ApexaError(`Unsupported HTTP method "${requestedMethod}".`, {
+          code: "ERR_CONFIG",
+        });
+      }
+
+      const method = requestedMethod;
       const baseUrl = options.baseUrl ?? this.defaults.baseUrl;
       const basePath = normalizeBasePath(
         options.basePath ?? this.defaults.basePath,
@@ -666,17 +766,45 @@ export class Apexa implements ApexaRequestMethods {
 
       config = (await requestChain) as InternalRequestConfig;
 
-      if (!config || typeof config.url !== "string") {
+      if (
+        !config ||
+        typeof config.url !== "string" ||
+        !isHttpMethod(config.method)
+      ) {
         throw new ApexaError(
           "A request interceptor returned an invalid configuration.",
-          { code: "ERR_INTERCEPTOR" },
+          { code: "ERR_INTERCEPTOR", config },
         );
+      }
+
+      if (!(config.headers instanceof Headers)) {
+        try {
+          config.headers = new Headers(config.headers);
+        } catch (cause) {
+          throw new ApexaError(
+            "A request interceptor returned invalid headers.",
+            { code: "ERR_INTERCEPTOR", config, cause },
+          );
+        }
       }
 
       await this.applyCsrf(config);
 
       const adapter = options.adapter ?? this.defaults.adapter ?? fetchAdapter;
-      const response = await this.performWithRetry(config, adapter);
+      let response: Response;
+
+      try {
+        response = await this.performWithRetry(config, adapter);
+      } catch (cause) {
+        if (cause instanceof ApexaError) throw cause;
+
+        throw new ApexaError("The network request failed.", {
+          code: "ERR_NETWORK",
+          config,
+          cause,
+        });
+      }
+
       const rawResponse = response.clone();
 
       const interpreter =
@@ -705,14 +833,36 @@ export class Apexa implements ApexaRequestMethods {
       parsedResponse = toApiResponse(data, response, rawResponse, config);
 
       if (!response.ok) {
-        throw new ApexaError(
-          `Request failed with HTTP status ${response.status}.`,
-          {
-            code: "ERR_HTTP",
-            config,
-            response: parsedResponse,
-          },
-        );
+        const responseData = isRecord(parsedResponse.data)
+          ? parsedResponse.data
+          : {};
+        const errorHandler = options.errorHandler ?? this.defaults.errorHandler;
+        let handledError: ErrorDetails;
+
+        try {
+          handledError = normalizeErrorDetails(
+            errorHandler?.(responseData) ??
+              defaultErrorHandler(responseData, response.status),
+            response.status,
+          );
+        } catch (cause) {
+          throw new ApexaError(
+            "The configured error handler failed to process the response.",
+            {
+              code: "ERR_HTTP",
+              config,
+              response: parsedResponse,
+              cause,
+            },
+          );
+        }
+
+        throw new ApexaError(handledError.message, {
+          code: handledError.code,
+          priority: handledError.priority,
+          config,
+          response: parsedResponse,
+        });
       }
 
       const elapsed = Date.now() - startedAt;
@@ -898,7 +1048,10 @@ export class Apexa implements ApexaRequestMethods {
           await response.body?.cancel().catch(() => undefined);
 
           const backoffMs = Math.min(maxDelay, delay * backoff ** attempt);
-          await sleep(Math.min(maxDelay, Math.max(backoffMs, retryAfterMs)));
+          await sleep(
+            Math.min(maxDelay, Math.max(backoffMs, retryAfterMs)),
+            config.signal,
+          );
           continue;
         }
 
@@ -913,7 +1066,10 @@ export class Apexa implements ApexaRequestMethods {
           throw error;
         }
 
-        await sleep(Math.min(maxDelay, delay * backoff ** attempt));
+        await sleep(
+          Math.min(maxDelay, delay * backoff ** attempt),
+          config.signal,
+        );
       }
     }
   }
@@ -957,7 +1113,6 @@ export default Apexa;
 export type {
   ApiResponse,
   ApexaConfig,
-  ApexaErrorCode,
   ApexaErrorOptions,
   ApexaRequestMethods,
   ClientOptions,

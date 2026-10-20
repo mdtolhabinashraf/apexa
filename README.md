@@ -55,7 +55,31 @@ await api.options<T>("/users");
 ```
 
 All methods return `Promise<ApiResponse<T>>`. HTTP failures throw `ApexaError`
-with a stable error `code` and the parsed response available as `error.response`.
+with a machine-readable `code` and the parsed response available as
+`error.response`.
+
+### Error handling
+
+Use `errorHandler` to map an unsuccessful response into an application-specific
+error message, code, and priority:
+
+```ts
+const api = new Apexa({
+  errorHandler: (data) => ({
+    message:
+      typeof data.message === "string"
+        ? data.message
+        : "The request could not be completed.",
+    code: typeof data.code === "string" ? data.code : "API_ERROR",
+    priority: "medium",
+  }),
+});
+```
+
+The handler is called for non-2xx responses after the body is interpreted.
+Returned fields are normalized when missing or invalid, and custom string
+codes are supported. See the [API Reference](./docs/API.md#errors) for the
+standard client error codes and complete error behavior.
 
 ## Response access
 
@@ -85,6 +109,7 @@ used without consuming the parsed response payload.
 - Configurable timeouts and minimum request duration
 - Safe retries for transient responses and network errors
 - CSRF token handling
+- Custom HTTP error handling with application-defined error codes
 - Custom Fetch-compatible adapters and response interpreters
 - Native Fetch response access for streaming and specialized body handling
 

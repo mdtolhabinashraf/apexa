@@ -161,6 +161,13 @@ export interface ClientOptions extends FetchOptions {
 
   /** Custom response-body interpreter. */
   interpreter?: ResponseInterpreter;
+
+  /** Error handler for standardizing error responses. */
+  errorHandler?: (data: Record<string, unknown>) => {
+    message: string;
+    code: string;
+    priority: "high" | "medium" | "low";
+  };
 }
 
 /** Options passed to the Apexa constructor. */
@@ -340,22 +347,13 @@ export type ResponseRejectedInterceptor = (error: unknown) => unknown;
 /** Identifier returned when registering an interceptor. */
 export type InterceptorId = number;
 
-/** Stable machine-readable Apexa error codes. */
-export type ApexaErrorCode =
-  | "ERR_CONFIG"
-  | "ERR_NETWORK"
-  | "ERR_TIMEOUT"
-  | "ERR_ABORTED"
-  | "ERR_HTTP"
-  | "ERR_PARSE"
-  | "ERR_CSRF"
-  | "ERR_INTERCEPTOR"
-  | "ERR_UNKNOWN";
-
 /** Context supplied when constructing an Apexa error. */
 export interface ApexaErrorOptions {
   /** Stable machine-readable error code. */
-  code: ApexaErrorCode;
+  code: string;
+
+  /** Error priority. Defaults to "medium". */
+  priority?: "high" | "medium" | "low";
 
   /** Effective request configuration, if available. */
   config?: InternalRequestConfig;
