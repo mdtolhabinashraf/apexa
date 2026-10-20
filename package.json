@@ -1,15 +1,23 @@
 {
   "name": "apexa",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "A production-ready, TypeScript-first HTTP client built on the Fetch API.",
   "license": "MIT",
-  "author": "Md. Tolha Bin Ashraf",
+  "author": {
+    "name": "Md. Tolha Bin Ashraf",
+    "url": "https://github.com/mdtolhabinashraf"
+  },
   "type": "module",
   "main": "./dist/index.js",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mdtolhabinashraf/apexa.git"
+    "url": "git+https://github.com/mdtolhabinashraf/apexa.git"
+  },
+  "homepage": "https://github.com/mdtolhabinashraf/apexa#readme",
+  "bugs": {
+    "url": "https://github.com/mdtolhabinashraf/apexa/issues"
   },
   "exports": {
     ".": {
@@ -19,7 +27,12 @@
     "./types": {
       "types": "./dist/types.d.ts",
       "import": "./dist/types.js"
-    }
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "files": [
     "dist",
@@ -30,25 +43,29 @@
   ],
   "sideEffects": false,
   "engines": {
-    "node": ">=20"
+    "node": ">=20.0.0"
   },
   "scripts": {
     "clean": "node -e \"import('node:fs').then(fs => fs.rmSync('dist', { recursive: true, force: true }))\"",
     "build": "npm run clean && tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:typecheck": "tsc --noEmit -p tsconfig.tests.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "prepack": "npm run build"
+    "prepack": "npm run typecheck && npm run test:typecheck && npm test && npm run build"
   },
   "devDependencies": {
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vitest": "^3.2.4"
   },
   "keywords": [
-    "http",
-    "fetch",
     "api-client",
-    "typescript",
+    "fetch",
+    "http",
     "http-client",
     "interceptors",
     "request",
-    "response"
+    "response",
+    "typescript",
+    "web-api"
   ]
 }

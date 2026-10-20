@@ -44,6 +44,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify package
+        run: npm run prepack
+
       - name: Validate release version
         shell: bash
         run: |
@@ -54,9 +57,6 @@ jobs:
             echo "::error::Release tag v$TAG_VERSION does not match package.json version $PACKAGE_VERSION"
             exit 1
           fi
-
-      - name: Type check
-        run: npm run typecheck
 
       - name: Build and publish
         run: npm publish --provenance --access public

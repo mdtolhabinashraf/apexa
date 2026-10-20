@@ -4,16 +4,16 @@ All notable changes to Apexa are documented here.
 
 This project follows [Semantic Versioning](https://semver.org/).
 
-## [1.0.0] - 2026-10-20
+## [2.0.0] - 2026-10-20
 
-The first stable release of Apexa.
+The current stable release of Apexa.
 
 ### Added
 
 - Class-based, strongly typed HTTP client built on the Fetch API.
 - Request methods for `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, and `OPTIONS`.
 - Configurable base URLs, base paths, query parameters, headers, and metadata.
-- Typed `ApiResponse<T>` contracts with status, headers, URL, request configuration,
+- Typed `ApexaResponse<T>` contracts with status, headers, URL, request configuration,
   native response access, and manual body readers.
 - Request and response interceptors with registration and removal support.
 - Per-request overrides for client configuration.
