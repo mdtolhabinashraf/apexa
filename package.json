@@ -1,7 +1,7 @@
 {
   "name": "apexa",
-  "version": "0.1.1",
-  "description": "A configurable, TypeScript-first HTTP client built on the Fetch API.",
+  "version": "1.0.0",
+  "description": "A production-ready, TypeScript-first HTTP client built on the Fetch API.",
   "license": "MIT",
   "author": "Md. Tolha Bin Ashraf",
   "type": "module",
