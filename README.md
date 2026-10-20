@@ -9,6 +9,8 @@ custom adapters, and flexible response parsing.
 [![npm version](https://img.shields.io/npm/v/apexa)](https://www.npmjs.com/package/apexa)
 [![License](https://img.shields.io/github/license/mdtolhabinashraf/apexa)](./LICENSE)
 
+Apexa `v2.0.0` is the current stable release.
+
 ## Installation
 
 ```bash
@@ -54,36 +56,38 @@ await api.head("/users/123");
 await api.options<T>("/users");
 ```
 
-All methods return `Promise<ApiResponse<T>>`. HTTP failures throw `ApexaError`
-with a machine-readable `code` and the parsed response available as
+All methods return `Promise<ApexaResponse<T>>`. HTTP failures throw `ApexaError`
+by default, with a machine-readable `code` and the parsed response available as
 `error.response`.
 
 ### Error handling
 
-Use `errorHandler` to map an unsuccessful response into an application-specific
-error message, code, and priority:
+Use the `error` policy to map unsuccessful responses and provide an application
+error class:
 
 ```ts
 const api = new Apexa({
-  errorHandler: (data) => ({
-    message:
-      typeof data.message === "string"
+  error: {
+    handler: (data) => ({
+      message: typeof data.message === "string"
         ? data.message
         : "The request could not be completed.",
-    code: typeof data.code === "string" ? data.code : "API_ERROR",
-    priority: "medium",
-  }),
+      code: typeof data.code === "string" ? data.code : "API_ERROR",
+      priority: "medium",
+    }),
+    customError: MyApplicationError,
+  },
 });
 ```
 
-The handler is called for non-2xx responses after the body is interpreted.
-Returned fields are normalized when missing or invalid, and custom string
-codes are supported. See the [API Reference](./docs/API.md#errors) for the
-standard client error codes and complete error behavior.
+`error.customError` must be an error constructor accepting `(message, options)`,
+where `options` is `ApexaErrorOptions`. It defaults to `ApexaError` and may also
+be provided per request. See the [API Reference](./docs/API.md#errors) for
+complete error behavior.
 
 ## Response access
 
-`ApiResponse<T>` includes the parsed `data`, status metadata, headers, request
+`ApexaResponse<T>` includes the parsed `data`, status metadata, headers, request
 configuration, and the native Fetch response:
 
 ```ts

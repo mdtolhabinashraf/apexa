@@ -11,7 +11,7 @@ Thank you for your interest in contributing.
 ## Development setup
 
 1. Fork the repository and clone your fork.
-2. Install the supported Node.js version.
+2. Install Node.js 20 or newer, as required by Apexa `v2.0.0`.
 3. Install dependencies with `npm install`.
 4. Create a focused branch for your change.
 
