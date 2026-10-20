@@ -4,18 +4,26 @@ All notable changes to Apexa are documented here.
 
 This project follows [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.0.0] - 2026-10-20
+
+The first stable release of Apexa.
 
 ### Added
-- Class-based HTTP client API.
-- Typed request and response contracts.
-- Request and response interceptors.
-- Per-request overrides for client configuration.
-- Configurable adapters and response interpreters.
-- Timeout, cancellation, CSRF, and retry options.
 
-### Before the first release
-- Confirm the final package name and version.
-- Run type checking and automated tests.
-- Verify ESM exports and generated declaration files.
-- Test the packed tarball in a clean consumer project.
+- Class-based, strongly typed HTTP client built on the Fetch API.
+- Request methods for `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, and `OPTIONS`.
+- Configurable base URLs, base paths, query parameters, headers, and metadata.
+- Typed `ApiResponse<T>` contracts with status, headers, URL, request configuration,
+  native response access, and manual body readers.
+- Request and response interceptors with registration and removal support.
+- Per-request overrides for client configuration.
+- Configurable Fetch-compatible adapters and response interpreters.
+- Timeout, cancellation, minimum-duration, retry, and CSRF handling.
+- Standardized `ApexaError` errors with stable machine-readable error codes.
+- ESM package exports and generated TypeScript declaration files.
+
+### Documentation
+
+- Added complete API reference documentation.
+- Added installation, quick-start, response access, security, support, and
+  contribution guidance.

@@ -84,13 +84,29 @@ Absolute URLs bypass `baseUrl` and `basePath`. Query parameters with `null` or `
 | Property | Type | Description |
 |---|---|---|
 | `data` | `T` | Parsed response payload. |
+| `raw` | `Response` | Native Fetch response preserved for low-level/manual access. |
+| `ok` | `boolean` | Whether the response status is in the successful range (`200`–`299`). |
 | `status` | `number` | HTTP status code. |
 | `statusText` | `string` | HTTP status text. |
 | `headers` | `Headers` | Response headers. |
+| `body` | `ReadableStream<Uint8Array> \| null` | Preserved response body stream for low-level streaming access. |
+| `redirected` | `boolean` | Whether the Fetch implementation followed one or more redirects. |
+| `type` | `ResponseType` | Response type determined by the Fetch implementation. |
+| `bodyUsed` | `boolean` | Whether the preserved response body has been consumed. |
 | `url` | `string` | Final response URL, falling back to the configured URL. |
 | `config` | `InternalRequestConfig` | Effective normalized request configuration. |
+| `text()` | `() => Promise<string>` | Read the body as text from a fresh response clone. |
+| `json<U>()` | `() => Promise<U>` | Parse the body as JSON from a fresh response clone. |
+| `blob()` | `() => Promise<Blob>` | Read the body as a Blob from a fresh response clone. |
+| `arrayBuffer()` | `() => Promise<ArrayBuffer>` | Read the body as an ArrayBuffer from a fresh response clone. |
+| `formData()` | `() => Promise<FormData>` | Read the body as FormData from a fresh response clone. |
+| `clone()` | `() => Response` | Create a native Fetch response clone for manual body handling. |
 
 `T` is a compile-time expectation only. Use a runtime validator for untrusted response data.
+
+The body-reading helpers use independent clones, so calling one does not consume
+the response exposed by another helper. The `raw` response is also available
+when direct Fetch APIs are required.
 
 ## Interceptors
 

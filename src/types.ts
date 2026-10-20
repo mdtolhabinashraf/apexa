@@ -255,6 +255,12 @@ export interface ApiResponse<T = unknown> {
   /** Parsed response payload. */
   data: T;
 
+  /** The native Fetch response preserved for low-level/manual access. */
+  raw: Response;
+
+  /** Whether the response status is in the successful range (200–299). */
+  ok: boolean;
+
   /** HTTP status code. */
   status: number;
 
@@ -264,11 +270,41 @@ export interface ApiResponse<T = unknown> {
   /** Response headers. */
   headers: Headers;
 
+  /** Preserved response body stream for low-level streaming access. */
+  body: ReadableStream<Uint8Array> | null;
+
+  /** Whether the response was followed through one or more redirects. */
+  redirected: boolean;
+
+  /** Response type determined by the Fetch implementation. */
+  type: ResponseType;
+
+  /** Whether the preserved response body has been consumed. */
+  bodyUsed: boolean;
+
   /** Final response URL. */
   url: string;
 
   /** Effective request configuration. */
   config: InternalRequestConfig;
+
+  /** Read the response body as text from a fresh response clone. */
+  text(): Promise<string>;
+
+  /** Parse the response body as JSON from a fresh response clone. */
+  json<U = unknown>(): Promise<U>;
+
+  /** Read the response body as a Blob from a fresh response clone. */
+  blob(): Promise<Blob>;
+
+  /** Read the response body as an ArrayBuffer from a fresh response clone. */
+  arrayBuffer(): Promise<ArrayBuffer>;
+
+  /** Read the response body as FormData from a fresh response clone. */
+  formData(): Promise<FormData>;
+
+  /** Create a native Fetch response clone for manual body handling. */
+  clone(): Response;
 }
 
 /** Adapter responsible for performing the network request. */

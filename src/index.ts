@@ -404,15 +404,28 @@ export const defaultInterpreter: ResponseInterpreter = async (response) => {
 function toApiResponse<T>(
   data: T,
   response: Response,
+  rawResponse: Response,
   config: InternalRequestConfig,
 ): ApiResponse<T> {
   return {
     data,
+    raw: rawResponse,
+    ok: response.ok,
     status: response.status,
     statusText: response.statusText,
     headers: new Headers(response.headers),
+    body: rawResponse.body,
+    redirected: response.redirected,
+    type: response.type,
+    bodyUsed: rawResponse.bodyUsed,
     url: response.url || config.url,
     config,
+    text: () => rawResponse.clone().text(),
+    json: <U = unknown>() => rawResponse.clone().json() as Promise<U>,
+    blob: () => rawResponse.clone().blob(),
+    arrayBuffer: () => rawResponse.clone().arrayBuffer(),
+    formData: () => rawResponse.clone().formData(),
+    clone: () => rawResponse.clone(),
   };
 }
 
@@ -664,6 +677,7 @@ export class Apexa implements ApexaRequestMethods {
 
       const adapter = options.adapter ?? this.defaults.adapter ?? fetchAdapter;
       const response = await this.performWithRetry(config, adapter);
+      const rawResponse = response.clone();
 
       const interpreter =
         options.interpreter ?? this.defaults.interpreter ?? defaultInterpreter;
@@ -688,7 +702,7 @@ export class Apexa implements ApexaRequestMethods {
         });
       }
 
-      parsedResponse = toApiResponse(data, response, config);
+      parsedResponse = toApiResponse(data, response, rawResponse, config);
 
       if (!response.ok) {
         throw new ApexaError(

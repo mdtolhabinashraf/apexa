@@ -2,7 +2,8 @@
 
 ## Supported versions
 
-Security fixes are intended for the latest supported release. Until the first stable release is published, support commitments are not yet established.
+Security fixes are intended for the latest stable release. Version `1.x` is
+currently supported.
 
 ## Reporting a vulnerability
 
