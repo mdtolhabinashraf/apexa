@@ -5,7 +5,7 @@ provides a single request pipeline for URL construction, headers, body
 serialization, retries, CSRF protection, interceptors, response parsing, and
 typed errors.
 
-This reference documents Apexa `v2.0.0`.
+This reference documents Apexa `v2.0.1`.
 
 - [Installation](#installation)
 - [Quick start](#quick-start)
@@ -157,7 +157,7 @@ contains the same options plus request-specific `method`, `query`, `body`, and
 | `headers` | `HeadersInit` | Default or per-request headers. Later values replace earlier values. |
 | `credentials` | `RequestCredentials` | Fetch credentials mode. Defaults to `same-origin`. |
 | `timeout` | `number` | Abort the request after this many milliseconds. `0` disables the timer. Default: `15000`. |
-| `minimumTime` | `number` | Ensure the request pipeline takes at least this many milliseconds. Default: `0`. |
+| `minimumTime` | `number` | Ensure the request pipeline takes at least this many milliseconds before returning either a response or an error. Default: `0`. |
 | `query` | `QueryParams` | Query values appended to the URL. |
 | `body` | `RequestBody` | Request payload. Plain objects and arrays are JSON serialized. |
 | `signal` | `AbortSignal` | External cancellation signal. |
