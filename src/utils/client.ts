@@ -107,6 +107,7 @@ export class Apexa implements ApexaRequestMethods {
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     let config: InternalRequestConfig | undefined;
     let parsedResponse: ApexaResponse<unknown> | undefined;
+    let minimumTime: number | undefined;
 
     const abortFromExternal = (): void => {
       controller.abort(externalSignal?.reason);
@@ -124,12 +125,11 @@ export class Apexa implements ApexaRequestMethods {
 
     try {
       validateNonNegative("timeout", timeout);
-      validateNonNegative(
-        "minimumTime",
+      minimumTime =
         options.minimumTime ??
-          this.defaults.minimumTime ??
-          DEFAULT_MINIMUM_TIME,
-      );
+        this.defaults.minimumTime ??
+        DEFAULT_MINIMUM_TIME;
+      validateNonNegative("minimumTime", minimumTime);
 
       if (timeout > 0) {
         timeoutId = setTimeout(() => {
@@ -348,6 +348,16 @@ export class Apexa implements ApexaRequestMethods {
 
       if (remaining > 0) await sleep(remaining);
     } catch (originalError) {
+      const requestMinimumTime = config?.minimumTime ?? minimumTime;
+      if (
+        typeof requestMinimumTime === "number" &&
+        Number.isFinite(requestMinimumTime) &&
+        requestMinimumTime >= 0
+      ) {
+        const remaining = requestMinimumTime - (Date.now() - startedAt);
+        if (remaining > 0) await sleep(remaining);
+      }
+
       let error: unknown = originalError;
 
       if (originalError instanceof ApexaError) {

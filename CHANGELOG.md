@@ -4,6 +4,17 @@ All notable changes to Apexa are documented here.
 
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [2.0.1] - 2026-11-01
+
+Patch release for request timing behavior.
+
+### Fixed
+
+- Enforced `minimumTime` before returning errors, including network, HTTP,
+  parsing, timeout, cancellation, and configuration failures.
+- Applied the configured minimum duration when failures occur before the
+  internal request configuration is created.
+
 ## [2.0.0] - 2026-10-20
 
 The current stable release of Apexa.

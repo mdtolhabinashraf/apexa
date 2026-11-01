@@ -3,7 +3,7 @@
 ## Supported versions
 
 Security fixes are intended for the latest stable release. Version `2.x` is
-currently supported, with `2.0.0` as the current stable release.
+currently supported, with `2.0.1` as the current stable release.
 
 ## Reporting a vulnerability
 

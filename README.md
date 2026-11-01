@@ -9,8 +9,6 @@ custom adapters, and flexible response parsing.
 [![npm version](https://img.shields.io/npm/v/apexa)](https://www.npmjs.com/package/apexa)
 [![License](https://img.shields.io/github/license/mdtolhabinashraf/apexa)](./LICENSE)
 
-Apexa `v2.0.0` is the current stable release.
-
 ## Installation
 
 ```bash
@@ -69,9 +67,10 @@ error class:
 const api = new Apexa({
   error: {
     handler: (data) => ({
-      message: typeof data.message === "string"
-        ? data.message
-        : "The request could not be completed.",
+      message:
+        typeof data.message === "string"
+          ? data.message
+          : "The request could not be completed.",
       code: typeof data.code === "string" ? data.code : "API_ERROR",
       priority: "medium",
     }),
@@ -110,7 +109,7 @@ used without consuming the parsed response payload.
 - Strong TypeScript types for requests, responses, errors, and configuration
 - Base URLs, base paths, query parameters, headers, and request metadata
 - Request and response interceptors
-- Configurable timeouts and minimum request duration
+- Configurable timeouts and minimum request duration, including rejected requests
 - Safe retries for transient responses and network errors
 - CSRF token handling
 - Custom HTTP error handling with application-defined error codes

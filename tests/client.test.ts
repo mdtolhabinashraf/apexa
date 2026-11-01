@@ -319,4 +319,30 @@ describe("Apexa request pipeline", () => {
       .rejects.toMatchObject({ code: "ERR_TIMEOUT" });
     expect(() => new Apexa({ timeout: -1 })).toThrow(ApexaError);
   });
+
+  it("enforces minimumTime before returning request errors", async () => {
+    vi.useFakeTimers();
+    try {
+      const request = new Apexa({
+        minimumTime: 100,
+        adapter: async () => {
+          throw new Error("network failure");
+        },
+      }).get("/error");
+      let settled = false;
+      void request.then(
+        () => { settled = true; },
+        () => { settled = true; },
+      );
+
+      await vi.advanceTimersByTimeAsync(99);
+      expect(settled).toBe(false);
+
+      await vi.advanceTimersByTimeAsync(1);
+      await expect(request).rejects.toMatchObject({ code: "ERR_NETWORK" });
+      expect(settled).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
